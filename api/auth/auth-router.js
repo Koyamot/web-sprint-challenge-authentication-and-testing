@@ -1,22 +1,16 @@
 const bcryptjs = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const secrets = require('../../config/secrets.js');
+const dbConfig = require('../../data/dbConfig.js');
 const usersModel = require('../users/users-model.js');
 
 const router = require('express').Router();
 
 const Users = require('../users/users-model.js')
 
-const checkUsername = (req, res, next) => {
-  const { username } = req.body;
-  if (username !== Users.findBy(username)) {
-    next();
-  } else {
-    res.status(401).json({ error: "username taken"})
-  }
-}
 
-router.post('/register', checkUsername, async (req, res) => {
+
+router.post('/register', async (req, res) => {
   let {username, password } = req.body || null;
   if (!username || !password ) {
     res.status(401).json({ error: "username and password required"});
@@ -61,9 +55,41 @@ router.post('/register', checkUsername, async (req, res) => {
   */
 
 
-router.post('/login', (req, res) => {
-  res.end('implement login, please!');
-});
+ router.post('/login', async (req,res) => {
+  let { username, password } = req.body;
+  
+  try {
+      const user = await users.findBy({username})
+      console.log(`This is "user" = ${req.body}`)
+      console.log(user);
+      if(user && bcrypt.compareSync(password, user[0].password)) {
+          const token = generateToken(user)
+          
+          res.status(200).json({
+              message: `Welcome ${username}`,
+              token: token
+          })
+      } else {
+          res.status(401).json({message: 'Invalid credentials!'})
+      }
+  } catch (err) {
+      console.log(err);
+      res.status(500).json({message: `There was an error with the database ${err}`})
+  }
+})
+
+function generateToken(user) {
+  //
+  const payload =  {
+      subject: user.id,
+      username: user.username,
+  }
+
+  const options = {
+      expiresIn: "1d"
+  }
+  return jwt.sign(payload, secrets.jwtSecret, options)
+}
   /*
     IMPLEMENT
     You are welcome to build additional middlewares to help with the endpoint's functionality.
