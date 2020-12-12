@@ -1,7 +1,40 @@
+const bcryptjs = require('bcryptjs');
+const jwt = require('jsonwebtoken');
+const secrets = require('../../config/secrets.js');
+const usersModel = require('../users/users-model.js');
+
 const router = require('express').Router();
 
-router.post('/register', (req, res) => {
-  res.end('implement register, please!');
+const Users = require('../users/users-model.js')
+
+const checkUsername = (req, res, next) => {
+  const { username } = req.body;
+  if (username !== Users.findBy(username)) {
+    next();
+  } else {
+    res.status(401).json({ error: "username taken"})
+  }
+}
+
+router.post('/register', checkUsername, async (req, res) => {
+  let {username, password } = req.body || null;
+  if (!username || !password ) {
+    res.status(401).json({ error: "username and password required"});
+  } else {
+    try {
+      const rounds = process.env.BCRYPT_ROUNDS;
+      const hash = bcryptjs.hashSync(password, rounds)
+      password = hash
+      const saved = { username, hash }
+      const newUser = await Users.add(saved)
+      res.status(201).json(newUser)
+    } catch (err) {
+      console.log(err)
+    }
+  }
+
+});
+
   /*
     IMPLEMENT
     You are welcome to build additional middlewares to help with the endpoint's functionality.
@@ -26,10 +59,11 @@ router.post('/register', (req, res) => {
     4- On FAILED registration due to the `username` being taken,
       the response body should include a string exactly as follows: "username taken".
   */
-});
+
 
 router.post('/login', (req, res) => {
   res.end('implement login, please!');
+});
   /*
     IMPLEMENT
     You are welcome to build additional middlewares to help with the endpoint's functionality.
@@ -53,6 +87,6 @@ router.post('/login', (req, res) => {
     4- On FAILED login due to `username` not existing in the db, or `password` being incorrect,
       the response body should include a string exactly as follows: "invalid credentials".
   */
-});
 
+ 
 module.exports = router;
