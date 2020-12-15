@@ -16,14 +16,14 @@ async function find() {
   
 }
 
-async function findBy(filter) {
+async function findBy(username) {
   try {
-      const user = await db('users').where(filter).orderBy('id');
-      return user;
+    return await db('users').where({ username }).first();   
   } catch (err) {
       throw err;
   }
 }
+
 
 async function add(userData) {
   try {
