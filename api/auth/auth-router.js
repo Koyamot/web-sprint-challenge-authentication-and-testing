@@ -15,7 +15,6 @@ const checkForUser = async (req, res, next) => {
       if (user) { req.userExists = true; req.user = user }
       else { req.userExists = false; }
       console.log("this is user: ", user)
-      console.log("this is username: ", req.user.username)
       next();
     }
     else {
